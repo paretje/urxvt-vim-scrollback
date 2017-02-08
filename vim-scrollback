@@ -983,48 +983,26 @@ sub debug {
 # entry point for paste mode
 sub paste {
    my ($self, $selection) = @_;
-   $self->enable(key_press => \&key_press_paste);
-}
 
-sub key_press_paste {
-   my ($self, $event, $keysym, $string) =  @_;
-
-   if ($string){
-      my $selection = '';
-      if ($string eq "*"){
-         $selection = 'primary';
-      }elsif ($string eq "+"){
-         $selection = 'clipboard';
+   # avoid xclip hang when using primary with an active selection in the
+   # current terminal.
+   my $text = "";
+   if(open(my $process, "xclip -o -selection clipboard |")){
+      while ($text = <$process>){
+         # between rxvt-unicode 9.14 and 9.15 (or some other factor)
+         # writing out new lines doesn't work (they seem to be
+         # stripped), but using carriage returns does, so replace \n
+         # with \r so pasting works with both versions (removing of \n
+         # mostly to accommodate paste into vim since the term won't
+         # issue both \n and \r, but vim will, resulting in extra lines
+         # between pasted text... may affect other terminal apps as
+         # well).
+         $text =~ s/\n$/\r/;
+         $self->tt_write($text);
       }
-
-      if ($selection){
-         # avoid xclip hang when using primary with an active selection in the
-         # current terminal.
-         my $text = $self->selection();
-         if($selection eq "primary" && $text){
-            $self->tt_write($text);
-         }else{
-            if(open(my $process, "xclip -o -selection $selection |")){
-               while ($text = <$process>){
-                  # between rxvt-unicode 9.14 and 9.15 (or some other factor)
-                  # writing out new lines doesn't work (they seem to be
-                  # stripped), but using carriage returns does, so replace \n
-                  # with \r so pasting works with both versions (removing of \n
-                  # mostly to accommodate paste into vim since the term won't
-                  # issue both \n and \r, but vim will, resulting in extra lines
-                  # between pasted text... may affect other terminal apps as
-                  # well).
-                  $text =~ s/\n$/\r/;
-                  $self->tt_write($text);
-               }
-               #$text = join("\r", <$process>);
-               #$self->tt_write($text);
-               close $process;
-            }
-         }
-      }
-      $self->disable("key_press");
-      1
+      #$text = join("\r", <$process>);
+      #$self->tt_write($text);
+      close $process;
    }
 }
 
