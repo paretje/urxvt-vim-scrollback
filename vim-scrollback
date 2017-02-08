@@ -224,6 +224,9 @@ sub enter {
    }
    $self->{launcher} = $urlLauncher;
 
+   # show cursor
+   $self->cmd_parse("\033[?12l\033[?25h");
+
    # copied from matcher
    my @defaults = ($url);
    my @matchers;
