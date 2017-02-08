@@ -331,7 +331,8 @@ sub key_press_normal {
    $self->msg("");
    if ($keysym == 0xff1b ||
       $string =~ /^\cC$/ ||
-      ($self->{key_buffer} =~ /^$/ && $keysym == 0xff0d))
+      ($self->{key_buffer} =~ /^$/ && $keysym == 0xff0d) ||
+      $string eq "q")
    { # esc, ctrl-c, <enter>
       if($self->{key_buffer}){
          $self->{key_buffer} = "";
